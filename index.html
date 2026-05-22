@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>麻城痞子杠 计算器</title>
+<style>
+  :root {
+    --bg: #1a2e1a;
+    --card: #f5f0e6;
+    --card-dark: #e8e0cc;
+    --red: #c0392b;
+    --gold: #d4a017;
+    --green: #27ae60;
+    --dark-green: #1e7a3e;
+    --text: #2c2c2c;
+    --text-light: #666;
+    --border: #ccc;
+    --shadow: rgba(0,0,0,0.15);
+    --radius: 12px;
+  }
+  * { margin:0; padding:0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 12px;
+    padding-bottom: 80px;
+  }
+  h1 { text-align: center; color: var(--gold); font-size: 1.4rem; margin-bottom: 12px; letter-spacing: 2px; }
+  .card { background: var(--card); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 8px var(--shadow); }
+  .section-title {
+    font-size: 0.9rem; font-weight: 700; color: var(--dark-green);
+    margin-bottom: 10px; padding-bottom: 6px; border-bottom: 2px solid var(--gold);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-title .icon { font-size: 1.1rem; }
+  label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text); cursor: pointer; }
+  input[type="number"] {
+    width: 70px; padding: 6px 8px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 0.95rem; text-align: center;
+    background: #fff; color: var(--text);
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .input-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; flex-wrap: wrap; gap: 6px; }
+  .input-row label { padding: 4px 0; }
+  .unit { font-size: 0.85rem; color: var(--text-light); }
+  .gang-box {
+    background: rgba(255,255,255,0.6);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .gang-box span { font-size: 0.78rem; color: var(--text-light); white-space: nowrap; }
+  .gang-box input { width: 38px; border: none; border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); border-radius: 0; padding: 3px 2px; }
+  .gang-box .btn-sm {
+    width: 24px; height: 24px; border: none; border-radius: 5px;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    background: var(--dark-green); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none;
+  }
+  .gang-box .btn-sm.minus { background: #aaa; }
+  .gang-box .btn-sm:active { transform: scale(0.92); }
+  .counter-btn {
+    width: 30px; height: 30px; border: none; border-radius: 6px;
+    font-size: 1.1rem; font-weight: 700; cursor: pointer;
+    background: var(--dark-green); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none;
+  }
+  .counter-btn:active { transform: scale(0.95); }
+  .counter-btn.minus { background: #aaa; }
+  .gang-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .gang-grid-item {
+    background: #fff; border: 1.5px solid var(--border);
+    border-radius: 8px; padding: 6px 8px;
+  }
+  .gang-grid-item label { font-size: 0.78rem; color: var(--text-light); display: block; margin-bottom: 4px; }
+  .gang-grid-item .gang-row {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .gang-grid-item .gang-row input { width: 36px; border: none; border-top: 1.5px solid var(--border); border-bottom: 1.5px solid var(--border); border-radius: 0; text-align: center; padding: 3px; }
+  .gang-grid-item .gang-row .btn-sm {
+    width: 24px; height: 24px; border: none; border-radius: 5px;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+    background: var(--dark-green); color: #fff;
+    display: flex; align-items: center; justify-content: center; user-select: none;
+  }
+  .gang-grid-item .gang-row .btn-sm.minus { background: #aaa; }
+  .gang-grid-item .gang-row .btn-sm:disabled,
+  .gang-grid-item .gang-row .btn-sm.disabled {
+    background: #ccc !important; color: #888 !important; cursor: not-allowed; opacity: 0.5;
+  }
+  .radio-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .radio-item { flex: 1; min-width: 60px; cursor: pointer; }
+  .radio-item.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+  .radio-item input { display: none; }
+  .radio-item span {
+    display: block; text-align: center; padding: 8px 4px;
+    border: 2px solid var(--border); border-radius: 8px;
+    font-size: 0.88rem; background: #fff; color: var(--text-light); transition: all 0.15s;
+  }
+  .radio-item input:checked + span { border-color: var(--red); background: var(--red); color: #fff; font-weight: 700; }
+  .loser-row {
+    background: var(--card-dark); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+  }
+  .loser-row .loser-title { font-size: 0.85rem; font-weight: 700; color: var(--dark-green); margin-bottom: 8px; }
+  .loser-row .sub-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .sub-row .radio-item span { font-size: 0.8rem; padding: 6px 4px; }
+  .loser-gang-section { margin-top: 8px; }
+  .loser-gang-section .loser-gang-title { font-size: 0.78rem; color: var(--text-light); margin-bottom: 6px; }
+  .loser-gang-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+  .loser-gang-row .lg-label { font-size: 0.78rem; color: var(--text-light); width: 56px; }
+  .loser-gang-row .lg-input-wrap { display: flex; align-items: center; gap: 4px; }
+  .loser-gang-row input.lg-count {
+    width: 36px; text-align: center; padding: 4px 2px;
+    border: 1.5px solid var(--border); border-radius: 6px;
+    font-size: 0.85rem;
+    -moz-appearance: textfield;
+  }
+  .loser-gang-row input.lg-count::-webkit-outer-spin-button,
+  .loser-gang-row input.lg-count::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .loser-gang-row .btn-xs {
+    width: 22px; height: 22px; border: none; border-radius: 4px;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    background: var(--dark-green); color: #fff;
+    display: flex; align-items: center; justify-content: center; user-select: none;
+  }
+  .loser-gang-row .btn-xs.minus { background: #aaa; }
+  .result-card {
+    background: linear-gradient(135deg, var(--dark-green), #145a32);
+    color: #fff; border-radius: var(--radius); padding: 16px; margin-bottom: 12px;
+  }
+  .result-winner { text-align: center; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.3); }
+  .result-winner .label { font-size: 0.85rem; opacity: 0.8; }
+  .result-winner .count { font-size: 2.2rem; font-weight: 700; color: var(--gold); }
+  .result-winner .amount { font-size: 1.1rem; color: #ffd700; }
+  .result-losers { display: flex; flex-direction: column; gap: 8px; }
+  .result-loser-item {
+    background: rgba(255,255,255,0.12); border-radius: 8px;
+    padding: 10px 12px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .result-loser-item .name { font-size: 0.9rem; font-weight: 600; }
+  .result-loser-item .nums { text-align: right; }
+  .result-loser-item .count-line { font-size: 0.9rem; }
+  .result-loser-item .amount-line { font-size: 0.85rem; color: #ffd700; }
+  .result-loser-item .extra-line { font-size: 0.8rem; color: #ff6b6b; margin-top: 2px; }
+  .result-loser-item.bei { border: 1.5px solid #ff6b6b; }
+  .note-card {
+    background: #fff3cd; border: 1.5px solid #ffc107;
+    border-radius: var(--radius); padding: 10px 14px;
+    font-size: 0.82rem; color: #856404; line-height: 1.6;
+  }
+  .note-card strong { color: var(--red); }
+  .calc-btn {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    padding: 12px 16px; background: var(--card);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 100;
+  }
+  .calc-btn button {
+    width: 100%; padding: 14px; background: var(--red); color: #fff;
+    border: none; border-radius: 10px;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer; letter-spacing: 2px;
+  }
+  .calc-btn button:active { transform: scale(0.98); }
+  .result-section { display: none; }
+  .result-section.show { display: block; }
+  .hidden-section { display: none; }
+  .gang-calc-hint { font-size: 0.75rem; color: var(--text-light); margin-top: 4px; }
+  .gang-calc-hint span { color: var(--red); font-weight: 700; }
+  .summary-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .tag { padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+  .tag.ding { background: #e74c3c; color: #fff; }
+  .tag.bei { background: #9b59b6; color: #fff; }
+  .tag.feng { background: #3498db; color: #fff; }
+  .tag.gang { background: #f39c12; color: #fff; }
+  .gang-count-total { text-align: right; font-size: 0.8rem; color: var(--red); font-weight: 700; margin-top: 4px; }
+  @media (min-width: 480px) {
+    .card { max-width: 480px; margin: 0 auto 12px; }
+    .calc-btn { max-width: 480px; left: 50%; transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body>
+
+<h1>🀄 痞子杠 计算器</h1>
+
+<!-- ===== 底价 ===== -->
+<div class="card">
+  <div class="section-title"><span class="icon">💰</span>底价设置</div>
+  <div class="input-row">
+    <label>底价（元）</label>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="number" id="basePrice" value="5" min="1" step="1" style="width:70px;padding:6px 8px;border:1.5px solid #ccc;border-radius:8px;font-size:0.95rem;text-align:center;">
+      <span class="unit">元</span>
+    </div>
+  </div>
+  <div style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">
+    常用：
+    <button onclick="document.getElementById('basePrice').value=5" style="background:none;border:1px solid #ccc;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:0.78rem;">5元</button>
+    <button onclick="document.getElementById('basePrice').value=10" style="background:none;border:1px solid #ccc;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:0.78rem;">10元</button>
+  </div>
+  <div id="priceTableHint" style="font-size:0.78rem;color:var(--text-light);margin-top:6px;"></div>
+</div>
+
+<!-- ===== 赢家开口 ===== -->
+<div class="card">
+  <div class="section-title"><span class="icon">🏆</span>赢家是否开口</div>
+  <div class="radio-group" id="winnerKaiGroup">
+    <label class="radio-item"><input type="radio" name="winnerKai" value="kai" checked><span>已开口</span></label>
+    <label class="radio-item"><input type="radio" name="winnerKai" value="weikai"><span>未开口</span></label>
+  </div>
+</div>
+
+<!-- ===== 胡牌方式 ===== -->
+<div class="card">
+  <div class="section-title"><span class="icon">🎯</span>胡牌方式</div>
+  <div class="radio-group">
+    <label class="radio-item"><input type="radio" name="hupaiType" value="zimohu_dahu" checked><span>自摸(大)</span></label>
+    <label class="radio-item"><input type="radio" name="hupaiType" value="zimohu_xiaohu"><span>自摸(小)</span></label>
+    <label class="radio-item"><input type="radio" name="hupaiType" value="dianpao_dahu"><span>点炮(大)</span></label>
+    <label class="radio-item"><input type="radio" name="hupaiType" value="dianpao_xiaohu"><span>点炮(小)</span></label>
+  </div>
+  <div style="font-size:0.78rem;color:var(--text-light);margin-top:8px;">
+    💡 自摸(大/小)：全员支付；点炮(大)：全员支付；点炮(小)：仅一人支付
+  </div>
+</div>
+
+<!-- ===== 赢家杠牌 ===== -->
+<div class="card">
+  <div class="section-title"><span class="icon">🔴</span>赢家杠牌（明杠1痞/暗杠2痞/痞子杠1痞/癞子杠2痞）</div>
+  <div class="gang-grid" id="winnerGangGrid">
+    <div class="gang-grid-item">
+      <label>明杠（冲/蓄杠）</label>
+      <div class="gang-row">
+        <button class="btn-sm minus" onclick="changeCount('w_ming',-1)">−</button>
+        <input type="number" id="w_ming" value="0" min="0" max="9" readonly>
+        <button class="btn-sm" onclick="changeCount('w_ming',1)">+</button>
+      </div>
+    </div>
+    <div class="gang-grid-item">
+      <label>暗杠</label>
+      <div class="gang-row">
+        <button class="btn-sm minus" onclick="changeCount('w_an',-1)">−</button>
+        <input type="number" id="w_an" value="0" min="0" max="9" readonly>
+        <button class="btn-sm" onclick="changeCount('w_an',1)">+</button>
+      </div>
+    </div>
+    <div class="gang-grid-item">
+      <label>痞子杠</label>
+      <div class="gang-row">
+        <button class="btn-sm minus" onclick="changeCount('w_pizi',-1)">−</button>
+        <input type="number" id="w_pizi" value="0" min="0" max="9" readonly>
+        <button class="btn-sm" onclick="changeCount('w_pizi',1)">+</button>
+      </div>
+    </div>
+    <div class="gang-grid-item">
+      <label>癞子杠</label>
+      <div class="gang-row">
+        <button class="btn-sm minus" onclick="changeCount('w_laizi',-1)">−</button>
+        <input type="number" id="w_laizi" value="0" min="0" max="9" readonly>
+        <button class="btn-sm" onclick="changeCount('w_laizi',1)">+</button>
+      </div>
+    </div>
+  </div>
+  <div class="gang-count-total" id="winnerGangCountHint">赢家杠牌总痞数：<span id="winnerGangCountVal">0</span>痞</div>
+  <div style="margin-top:14px; border-top:1px dashed #ccc; padding-top:12px;">
+    <div class="section-title" style="font-size:0.82rem;border-bottom:none;padding-bottom:0;margin-bottom:8px;">
+      <span class="icon">⚡</span>赢家胡牌类型 & 特殊
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+      <div class="radio-group" style="flex:1;min-width:120px;">
+        <label class="radio-item"><input type="radio" name="yingRuan" value="ying" checked><span>硬胡</span></label>
+        <label class="radio-item"><input type="radio" name="yingRuan" value="ruan"><span>软胡</span></label>
+      </div>
+    </div>
+    <div class="radio-group">
+      <label class="radio-item"><input type="checkbox" id="gangShangKaiHua"><span style="font-size:0.82rem;padding:6px 8px;">🌸 杠上开花 +1痞</span></label>
+      <label class="radio-item"><input type="checkbox" id="fengFan"><span style="font-size:0.82rem;padding:6px 8px;">🌪️ 风番触发 ×2</span></label>
+    </div>
+    <div id="menqianqingWrap" class="hidden-section" style="margin-top:8px;">
+      <label class="radio-item">
+        <input type="checkbox" id="menqianqing" onclick="onMenqianqingChange()">
+        <span style="font-size:0.82rem;padding:6px 8px;">🚪 门前清（赢家未开口且自摸）</span>
+      </label>
+      <div style="font-size:0.78rem;color:var(--text-light);margin-top:4px;" id="menqianqingHint"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 输家信息 ===== -->
+<div class="card">
+  <div class="section-title"><span class="icon">👥</span>输家开口 & 杠牌（用于计算各自痞子数）</div>
+  <div id="loserSection">
+    <!-- 动态生成 -->
+  </div>
+  <div class="note-card" style="margin-top:10px;">
+    💡 <strong>被闭条件：</strong>胡金顶（三家应付金额全部封顶）+ 1个或以上输家未开口
+  </div>
+</div>
+
+<!-- ===== 计算结果 ===== -->
+<div class="result-section" id="resultSection">
+  <div class="result-card">
+    <div class="result-winner">
+      <div class="label">赢家（<span id="winnerName"></span>）</div>
+      <div class="count"><span id="winnerCount"></span>痞</div>
+      <div class="amount">💰 <span id="winnerAmount"></span>元</div>
+    </div>
+    <div class="result-losers" id="resultLosers"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><span class="icon">📋</span>触发说明</div>
+    <div class="summary-tags" id="summaryTags"></div>
+    <div id="beiDetail" style="display:none;margin-top:8px;font-size:0.82rem;color:#856404;background:#fff3cd;padding:8px 12px;border-radius:8px;"></div>
+    <div id="priceTableResult" style="display:none;margin-top:8px;font-size:0.78rem;color:var(--text-light);"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title"><span class="icon">✅</span>验算</div>
+    <div id="verifyText" style="font-size:0.9rem;color:var(--dark-green);text-align:center;"></div>
+  </div>
+</div>
+
+<div class="calc-btn">
+  <button onclick="calculate()" id="calcBtn">🧮 计算结果</button>
+</div>
+
+<script>
+// ====== 价格表（按底价）======
+function getPriceTable(basePrice) {
+  var mult = basePrice / 5;
+  return [
+    { count: 0, amount: 0 },           // 口对口
+    { count: 1, amount: 2 * mult },
+    { count: 2, amount: 5 * mult },
+    { count: 3, amount: 10 * mult },    // 封顶
+  ];
+}
+
+function lookupPrice(totalCount, basePrice) {
+  var table = getPriceTable(basePrice);
+  var idx = Math.min(totalCount, 3);
+  return table[idx].amount;
+}
+
+function getCapAmount(basePrice) {
+  return getPriceTable(basePrice)[3].amount;
+}
+
+// ====== 赢家杠牌次数明细 ======
+function getWinnerGang_raw() {
+  var hupaiType = document.querySelector('input[name="hupaiType"]:checked').value;
+  var isDahu = (hupaiType === 'zimohu_dahu' || hupaiType === 'dianpao_dahu');
+  return {
+    dahu:  isDahu ? 1 : 0,
+    ying:  document.querySelector('input[name="yingRuan"]:checked')?.value === 'ying' ? 1 : 0,
+    ming:  parseInt(document.getElementById('w_ming').value) || 0,
+    an:    parseInt(document.getElementById('w_an').value) || 0,
+    pizi:  parseInt(document.getElementById('w_pizi').value) || 0,
+    laizi: parseInt(document.getElementById('w_laizi').value) || 0,
+    gskh:  document.getElementById('gangShangKaiHua').checked ? 1 : 0,
+  };
+}
+
+// ====== 赢家自身次数 ======
+function getWinnerCount() {
+  var g = getWinnerGang_raw();
+  var c = 0;
+  c += g.dahu ? 1 : 0;   // 大胡 +1次
+  c += g.ying ? 1 : 0;   // 硬胡 +1次
+  c += g.ming;              // 明杠 +1次/个
+  c += g.an * 2;           // 暗杠 +2次/个
+  c += g.pizi;              // 痞子杠 +1次/个
+  c += g.laizi * 2;       // 癞子杠 +2次/个
+  c += g.gskh ? 1 : 0;   // 杠上开花 +1次
+  return c;
+}
+
+// ====== 输家自身次数 ======
+function getLoserCount(loserKey) {
+  var gang = {
+    ming:  parseInt(document.getElementById('lg_' + loserKey + '_ming').value) || 0,
+    an:    parseInt(document.getElementById('lg_' + loserKey + '_an').value) || 0,
+    pizi:  parseInt(document.getElementById('lg_' + loserKey + '_pizi').value) || 0,
+    laizi: parseInt(document.getElementById('lg_' + loserKey + '_laizi').value) || 0,
+  };
+  return gang.ming + gang.an * 2 + gang.pizi + gang.laizi * 2;
+}
+
+// ====== 计数器 ======
+function changeCount(id, delta) {
+  var input = document.getElementById(id);
+  if (!input || input.disabled) return;
+  var val = parseInt(input.value) || 0;
+  val = Math.max(0, Math.min(9, val + delta));
+  input.value = val;
+  updateWinnerGangHint();
+}
+
+function changeLoserGang(loserKey, gangType, delta) {
+  var input = document.getElementById('lg_' + loserKey + '_' + gangType);
+  if (!input || input.disabled) return;
+  var val = parseInt(input.value) || 0;
+  val = Math.max(0, Math.min(9, val + delta));
+  input.value = val;
+  updateLoserGangHint(loserKey);
+}
+
+function updateWinnerGangHint() {
+  var c = getWinnerCount();
+  document.getElementById('winnerGangCountVal').textContent = c;
+}
+
+function updateLoserGangHint(loserKey) {
+  var hint = document.getElementById('lg_hint_' + loserKey);
+  if (!hint) return;
+  var total = getLoserCount(loserKey);
+  hint.textContent = '杠牌痞数：' + total + '痞';
+}
+
+// 初始化
+document.getElementById('w_ming').addEventListener('input', updateWinnerGangHint);
+document.getElementById('w_an').addEventListener('input', updateWinnerGangHint);
+document.getElementById('w_pizi').addEventListener('input', updateWinnerGangHint);
+document.getElementById('w_laizi').addEventListener('input', updateWinnerGangHint);
+
+// ====== 胡牌方式监听 ======
+document.querySelectorAll('input[name="hupaiType"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    updateMenqianqingVisibility();
+    updateLoserRowsVisibility();
+  });
+});
+
+// ====== 点炮小胡时灰掉输家2、3 ======
+function updateLoserRowsVisibility() {
+  var hupaiType = document.querySelector('input[name="hupaiType"]:checked').value;
+  var isDianpaoXiaohu = (hupaiType === 'dianpao_xiaohu');
+  ['xian2', 'xian3'].forEach(function(key) {
+    var row = document.getElementById('loser_row_' + key);
+    if (!row) return;
+    if (isDianpaoXiaohu) {
+      row.style.opacity = '0.4';
+      row.style.pointerEvents = 'none';
+    } else {
+      row.style.opacity = '1';
+      row.style.pointerEvents = 'auto';
+    }
+  });
+}
+
+// ====== 赢家明杠禁用（未开口不能明杠）======
+function updateWinnerMingGang() {
+  var weikai = document.querySelector('input[name="winnerKai"]:checked')?.value === 'weikai';
+  var mingInput = document.getElementById('w_ming');
+  var gangRow = mingInput?.closest('.gang-row');
+  var btns = gangRow ? gangRow.querySelectorAll('.btn-sm') : [];
+  if (weikai) {
+    mingInput.value = 0;
+    mingInput.disabled = true;
+    mingInput.style.opacity = '0.5';
+    btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.4'; b.style.pointerEvents = 'none'; });
+  } else {
+    mingInput.disabled = false;
+    mingInput.style.opacity = '1';
+    btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; b.style.pointerEvents = 'auto'; });
+  }
+  updateWinnerGangHint();
+}
+
+// ====== 赢家未开口时禁用点炮选项 ======
+function updateDianpaoOption() {
+  var weikai = document.querySelector('input[name="winnerKai"]:checked')?.value === 'weikai';
+  var dianpaoValues = ['dianpao_dahu', 'dianpao_xiaohu'];
+  dianpaoValues.forEach(function(val) {
+    var radio = document.querySelector('input[name="hupaiType"][value="' + val + '"]');
+    var labelEl = radio ? radio.closest('.radio-item') : null;
+    if (!radio) return;
+    if (weikai) {
+      // 若当前选中了点炮，强制切回自摸
+      if (radio.checked) {
+        document.querySelector('input[name="hupaiType"][value="zimohu_dahu"]').checked = true;
+        updateMenqianqingVisibility();
+        updateLoserRowsVisibility();
+      }
+      radio.disabled = true;
+      if (labelEl) labelEl.classList.add('disabled');
+    } else {
+      radio.disabled = false;
+      if (labelEl) labelEl.classList.remove('disabled');
+    }
+  });
+}
+
+// ====== 门前清显示 ======
+function updateMenqianqingVisibility() {
+  var weikai = document.querySelector('input[name="winnerKai"]:checked')?.value === 'weikai';
+  var zimohu = (document.querySelector('input[name="hupaiType"]:checked')?.value || '').startsWith('zimohu');
+  var wrap = document.getElementById('menqianqingWrap');
+  var hint = document.getElementById('menqianqingHint');
+  var mqCheckbox = document.getElementById('menqianqing');
+  if (!wrap) return;
+  wrap.classList.toggle('hidden-section', !(weikai && zimohu));
+  if (weikai && zimohu) {
+    var g = getWinnerGang_raw();
+    var gangCount = g.an * 2 + g.pizi + g.laizi * 2;
+    var loserKai = getLoserList().some(function(k) {
+      return document.querySelector('input[name="loser_' + k + '_kai"]:checked')?.value === 'kai';
+    });
+    if (gangCount >= 2) {
+      hint.textContent = '✅ 赢家暗/痞/癞杠痞数≥2，可选门前清';
+    } else if (loserKai) {
+      hint.textContent = '✅ 输家有开口，可选门前清';
+    } else {
+      hint.textContent = '⚠️ 需赢家暗/痞/癞杠痞数≥2，或输家有开口';
+    }
+  }
+  if (!(weikai && zimohu)) {
+    mqCheckbox.checked = false;
+  }
+  updateWinnerMingGang();
+  updateDianpaoOption();
+}
+
+document.querySelectorAll('input[name="winnerKai"]').forEach(function(r) {
+  r.addEventListener('change', updateMenqianqingVisibility);
+});
+
+function onMenqianqingChange() {
+  var mq = document.getElementById('menqianqing');
+  if (mq.checked) {
+    var winnerKai = document.querySelector('input[name="winnerKai"]:checked')?.value;
+    if (winnerKai === 'kai') {
+      alert('门前清仅适用于赢家未开口的情况！');
+      mq.checked = false;
+    }
+  }
+}
+
+// ====== 动态生成输家信息 ======
+var GANG_TYPES = [
+  {key:'ming', label:'明杠×1痞'},
+  {key:'an',   label:'暗杠×2痞'},
+  {key:'pizi', label:'痞子杠×1痞'},
+  {key:'laizi',label:'癞子杠×2痞'},
+];
+
+function buildLoserSection() {
+  var container = document.getElementById('loserSection');
+  var losers = ['xian1','xian2','xian3'];
+  var nameMap = {zhuang:'赢家', xian1:'输家1', xian2:'输家2', xian3:'输家3'};
+  container.innerHTML = losers.map(function(key) {
+    return '<div class="loser-row" id="loser_row_' + key + '">' +
+      '<div class="loser-title">' + nameMap[key] + '</div>' +
+      '<div class="sub-row">' +
+        '<span style="font-size:0.85rem;">是否开口：</span>' +
+        '<div class="radio-group" style="flex:1;">' +
+          '<label class="radio-item">' +
+            '<input type="radio" name="loser_' + key + '_kai" value="kai" checked>' +
+            '<span>已开口</span>' +
+          '</label>' +
+          '<label class="radio-item">' +
+            '<input type="radio" name="loser_' + key + '_kai" value="weikai">' +
+            '<span>未开口</span>' +
+          '</label>' +
+        '</div>' +
+      '</div>' +
+      '<div class="loser-gang-section">' +
+        '<div class="loser-gang-title">' + nameMap[key] + '杠牌（不填默认0）：</div>' +
+        GANG_TYPES.map(function(g) {
+          return '<div class="loser-gang-row">' +
+            '<div class="lg-label">' + g.label + '</div>' +
+            '<div class="lg-input-wrap">' +
+              '<button class="btn-xs minus" id="lg_btn_minus_' + key + '_' + g.key + '" onclick="changeLoserGang(\'' + key + '\',\'' + g.key + '\',-1)">−</button>' +
+              '<input type="number" class="lg-count" id="lg_' + key + '_' + g.key + '" value="0" min="0" max="9" readonly>' +
+              '<button class="btn-xs" id="lg_btn_plus_' + key + '_' + g.key + '" onclick="changeLoserGang(\'' + key + '\',\'' + g.key + '\',1)">+</button>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+        '<div class="gang-count-total" id="lg_hint_' + key + '" style="text-align:right;font-size:0.78rem;color:var(--red);font-weight:700;">杠牌痞数：0痞</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  setupLoserKaiListeners();
+  updateMenqianqingVisibility();
+  updateLoserRowsVisibility();
+}
+
+buildLoserSection();
+
+// 监听输家开口状态变化，未开口时禁用明杠
+function setupLoserKaiListeners() {
+  var losers = ['xian1','xian2','xian3'];
+  losers.forEach(function(key) {
+    document.querySelectorAll('input[name="loser_' + key + '_kai"]').forEach(function(r) {
+      r.addEventListener('change', function() {
+        var weikai = document.querySelector('input[name="loser_' + key + '_kai"]:checked').value === 'weikai';
+        var mingInput = document.getElementById('lg_' + key + '_ming');
+        // 找到明杠所在行，禁用该行所有.btn-xs
+        var row = mingInput ? mingInput.closest('.loser-gang-row') : null;
+        var btns = row ? row.querySelectorAll('.btn-xs') : [];
+        if (weikai) {
+          mingInput.value = 0;
+          mingInput.disabled = true;
+          mingInput.style.opacity = '0.5';
+          btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.4'; b.style.pointerEvents = 'none'; });
+        } else {
+          mingInput.disabled = false;
+          mingInput.style.opacity = '1';
+          btns.forEach(function(b) { b.disabled = false; b.style.opacity = '1'; b.style.pointerEvents = 'auto'; });
+        }
+        updateLoserGangHint(key);
+      });
+    });
+  });
+}
+
+  // ====== 计算引擎 ======
+function getLoserList() {
+  return ['xian1','xian2','xian3'];
+}
+function getWinnerName() { return '赢家'; }
+function getLoserName(key) { return {xian1:'输家1',xian2:'输家2',xian3:'输家3'}[key]; }
+
+function calculate() {
+  var basePrice  = parseInt(document.getElementById('basePrice').value) || 5;
+  var hupaiType  = document.querySelector('input[name="hupaiType"]:checked').value;
+  var isDianpaoXiaohu = (hupaiType === 'dianpao_xiaohu');
+  var fengFan    = document.getElementById('fengFan').checked;
+  var loserList  = getLoserList();
+  var capAmount  = getCapAmount(basePrice);
+
+  var W = getWinnerCount();
+
+  // 各输家基础金额（乘风番前）
+  // 已开口：lookupPrice(W + Lk)，未开口：降一档 lookupPrice(max(0, W+Lk-1))
+  var loserBaseAmounts = {};
+  loserList.forEach(function(k) {
+    var kai = document.querySelector('input[name="loser_' + k + '_kai"]:checked')?.value === 'kai';
+    var Lk = getLoserCount(k);
+    if (!kai) {
+      // 未开口：降一档（W+Lk-1，最低0次）
+      loserBaseAmounts[k] = lookupPrice(Math.max(0, W + Lk - 1), basePrice);
+    } else {
+      // 已开口：按双方合计次数查表
+      loserBaseAmounts[k] = lookupPrice(W + Lk, basePrice);
+    }
+  });
+
+  // 点炮小胡：只有输家1参与结算，输家2/3金额为0
+  if (isDianpaoXiaohu) {
+    // 输家2、3归零
+    loserList.forEach(function(k) {
+      if (k !== 'xian1') loserBaseAmounts[k] = 0;
+    });
+  }
+
+  // 金顶判断：三个输家应付金额（含未开口降档后）都达到封顶金额
+  // 大胡小胡均可触发，只要痞杠够多能封顶
+  var isJinding = false;
+  var allCap = loserList.every(function(k) {
+    return loserBaseAmounts[k] >= capAmount;
+  });
+  if (allCap) isJinding = true;
+
+  // 被闭：金顶 + 有未开口输家（自摸点炮均可，只要胡金顶就触发）
+  var beiLosers = [];
+  if (isJinding) {
+    loserList.forEach(function(k) {
+      var weikai = document.querySelector('input[name="loser_' + k + '_kai"]:checked')?.value === 'weikai';
+      if (weikai) beiLosers.push(k);
+    });
+  }
+  var beiCount = beiLosers.length;
+
+  // 风番：倍数只乘基础金额，不乘被闭extra
+  var loserFinalAmounts = {};
+  loserList.forEach(function(k) {
+    loserFinalAmounts[k] = loserBaseAmounts[k] * (fengFan ? 2 : 1);
+  });
+  if (beiCount > 0) {
+    beiLosers.forEach(function(k) {
+      loserFinalAmounts[k] += basePrice * beiCount; // extra不×风番
+    });
+  }
+
+  // 赢家最终收入 = 所有输家之和（点炮小胡时只有输家1参与）
+  var winnerFinalAmount = loserList.reduce(function(s, k) { return s + loserFinalAmounts[k]; }, 0);
+
+  // ====== 渲染 ======
+  document.getElementById('resultSection').classList.add('show');
+
+  document.getElementById('winnerName').textContent = getWinnerName();
+  document.getElementById('winnerCount').textContent = W;
+  document.getElementById('winnerAmount').textContent = winnerFinalAmount;
+
+  document.getElementById('resultLosers').innerHTML = loserList.map(function(k) {
+    var Lk = getLoserCount(k);
+    var isBei = beiLosers.indexOf(k) >= 0;
+    var displayAmount = loserFinalAmounts[k];
+    // 点炮小胡时，输家2/3显示"不参与"，输家1显示实际金额
+    var countLine = '自身' + Lk + '痞，付 ' + displayAmount + '元';
+    if (isDianpaoXiaohu && k !== 'xian1') {
+      countLine = '不参与点炮(小)结算';
+    }
+    return '<div class="result-loser-item' + (isBei ? ' bei' : '') + '">' +
+      '<div class="name">' + getLoserName(k) + '</div>' +
+      '<div class="nums">' +
+        '<div class="count-line">' + countLine + '</div>' +
+        (isBei ? '<div class="extra-line">⚠️ 被闭 +' + (basePrice * beiCount) + '元</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // 触发说明
+  var tags = [];
+  if (isJinding) tags.push('<span class="tag ding">金顶</span>');
+  if (beiCount > 0) tags.push('<span class="tag bei">被闭 ' + beiCount + '家</span>');
+  if (fengFan) tags.push('<span class="tag feng">风番 ×2</span>');
+  if (hupaiType === 'zimohu_dahu') tags.push('<span class="tag gang">自摸(大)</span>');
+  if (hupaiType === 'zimohu_xiaohu') tags.push('<span class="tag gang">自摸(小)</span>');
+  if (hupaiType === 'dianpao_dahu') tags.push('<span class="tag gang">点炮(大)</span>');
+  if (hupaiType === 'dianpao_xiaohu') tags.push('<span class="tag gang">点炮(小)</span>');
+  if (document.getElementById('gangShangKaiHua').checked) tags.push('<span class="tag gang">杠上开花</span>');
+  if (document.getElementById('menqianqing')?.checked) tags.push('<span class="tag ding">门前清</span>');
+  if (tags.length === 0) tags.push('<span style="color:#aaa;font-size:0.82rem;">无特殊触发</span>');
+  document.getElementById('summaryTags').innerHTML = tags.join('');
+
+  // 被闭详情
+  if (beiCount > 0) {
+    var beiNames = beiLosers.map(function(k) { return getLoserName(k); }).join('、');
+    document.getElementById('beiDetail').style.display = 'block';
+    document.getElementById('beiDetail').innerHTML =
+      '⚠️ ' + beiNames + '被闭，各额外付底价×' + beiCount + ' = ' + (basePrice * beiCount) + '元';
+  } else {
+    document.getElementById('beiDetail').style.display = 'none';
+  }
+
+  // 价格表
+  var table = getPriceTable(basePrice);
+  document.getElementById('priceTableResult').style.display = 'block';
+  document.getElementById('priceTableResult').innerHTML =
+    '📊 当前价格表（底价' + basePrice + '元）：' +
+    table.map(function(t) { return ' ' + t.count + '痞=' + t.amount + '元'; }).join('，');
+
+  // 验算
+  var loserSum = loserList.reduce(function(s, k) { return s + loserFinalAmounts[k]; }, 0);
+  var verifyOk = Math.abs(loserSum - winnerFinalAmount) < 0.01;
+  document.getElementById('verifyText').innerHTML = verifyOk
+    ? '✅ 验算通过：赢家赢得 ' + winnerFinalAmount + '元 = 输家总和 ' + loserSum + '元'
+    : '⚠️ 验算异常：赢家 ' + winnerFinalAmount + '元 vs 输家总和 ' + loserSum + '元';
+
+  document.getElementById('resultSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>
