@@ -284,13 +284,6 @@
       <label class="radio-item"><input type="checkbox" id="gangShangKaiHua"><span style="font-size:0.82rem;padding:6px 8px;">🌸 杠上开花 +1痞</span></label>
       <label class="radio-item"><input type="checkbox" id="fengFan"><span style="font-size:0.82rem;padding:6px 8px;">🌪️ 风番触发 ×2</span></label>
     </div>
-    <div id="menqianqingWrap" class="hidden-section" style="margin-top:8px;">
-      <label class="radio-item">
-        <input type="checkbox" id="menqianqing" onclick="onMenqianqingChange()">
-        <span style="font-size:0.82rem;padding:6px 8px;">🚪 门前清（赢家未开口且自摸）</span>
-      </label>
-      <div style="font-size:0.78rem;color:var(--text-light);margin-top:4px;" id="menqianqingHint"></div>
-    </div>
   </div>
 </div>
 
@@ -435,7 +428,8 @@ document.getElementById('w_laizi').addEventListener('input', updateWinnerGangHin
 // ====== 胡牌方式监听 ======
 document.querySelectorAll('input[name="hupaiType"]').forEach(function(r) {
   r.addEventListener('change', function() {
-    updateMenqianqingVisibility();
+    updateWinnerMingGang();
+    updateDianpaoOption();
     updateLoserRowsVisibility();
   });
 });
@@ -488,7 +482,8 @@ function updateDianpaoOption() {
       // 若当前选中了点炮，强制切回自摸
       if (radio.checked) {
         document.querySelector('input[name="hupaiType"][value="zimohu_dahu"]').checked = true;
-        updateMenqianqingVisibility();
+        updateWinnerMingGang();
+        updateDianpaoOption();
         updateLoserRowsVisibility();
       }
       radio.disabled = true;
@@ -500,50 +495,13 @@ function updateDianpaoOption() {
   });
 }
 
-// ====== 门前清显示 ======
-function updateMenqianqingVisibility() {
-  var weikai = document.querySelector('input[name="winnerKai"]:checked')?.value === 'weikai';
-  var zimohu = (document.querySelector('input[name="hupaiType"]:checked')?.value || '').startsWith('zimohu');
-  var wrap = document.getElementById('menqianqingWrap');
-  var hint = document.getElementById('menqianqingHint');
-  var mqCheckbox = document.getElementById('menqianqing');
-  if (!wrap) return;
-  wrap.classList.toggle('hidden-section', !(weikai && zimohu));
-  if (weikai && zimohu) {
-    var g = getWinnerGang_raw();
-    var gangCount = g.an * 2 + g.pizi + g.laizi * 2;
-    var loserKai = getLoserList().some(function(k) {
-      return document.querySelector('input[name="loser_' + k + '_kai"]:checked')?.value === 'kai';
-    });
-    if (gangCount >= 2) {
-      hint.textContent = '✅ 赢家暗/痞/癞杠痞数≥2，可选门前清';
-    } else if (loserKai) {
-      hint.textContent = '✅ 输家有开口，可选门前清';
-    } else {
-      hint.textContent = '⚠️ 需赢家暗/痞/癞杠痞数≥2，或输家有开口';
-    }
-  }
-  if (!(weikai && zimohu)) {
-    mqCheckbox.checked = false;
-  }
-  updateWinnerMingGang();
-  updateDianpaoOption();
-}
-
+// 开口状态变化时刷新明杠/点炮选项
 document.querySelectorAll('input[name="winnerKai"]').forEach(function(r) {
-  r.addEventListener('change', updateMenqianqingVisibility);
+  r.addEventListener('change', function() {
+    updateWinnerMingGang();
+    updateDianpaoOption();
+  });
 });
-
-function onMenqianqingChange() {
-  var mq = document.getElementById('menqianqing');
-  if (mq.checked) {
-    var winnerKai = document.querySelector('input[name="winnerKai"]:checked')?.value;
-    if (winnerKai === 'kai') {
-      alert('门前清仅适用于赢家未开口的情况！');
-      mq.checked = false;
-    }
-  }
-}
 
 // ====== 动态生成输家信息 ======
 var GANG_TYPES = [
@@ -590,7 +548,8 @@ function buildLoserSection() {
     '</div>';
   }).join('');
   setupLoserKaiListeners();
-  updateMenqianqingVisibility();
+  updateWinnerMingGang();
+  updateDianpaoOption();
   updateLoserRowsVisibility();
 }
 
@@ -637,20 +596,9 @@ function calculate() {
   var loserList  = getLoserList();
   var capAmount  = getCapAmount(basePrice);
 
-  // 门前清：属于"未开口+自摸小胡"，强制覆盖为小胡（无大胡加成）
-  var isMenqianqing = document.getElementById('menqianqing')?.checked;
-  if (isMenqianqing && (hupaiType === 'zimohu_dahu' || hupaiType === 'zimohu_xiaohu')) {
-    hupaiType = 'zimohu_xiaohu';
-  }
-
   var isDianpaoXiaohu = (hupaiType === 'dianpao_xiaohu');
 
   var W = getWinnerCount();
-  // 门前清时去掉大胡那1次加成（getWinnerGang_raw 读 DOM 还是大胡，手动减掉）
-  if (isMenqianqing) {
-    var domHupai = document.querySelector('input[name="hupaiType"]:checked').value;
-    if (domHupai === 'zimohu_dahu') W = Math.max(0, W - 1);
-  }
 
   // 各输家基础金额（乘风番前）
   // 已开口：lookupPrice(W + Lk)，未开口：降一档 lookupPrice(max(0, W+Lk-1))
@@ -742,7 +690,6 @@ function calculate() {
   if (hupaiType === 'dianpao_dahu') tags.push('<span class="tag gang">点炮(大)</span>');
   if (hupaiType === 'dianpao_xiaohu') tags.push('<span class="tag gang">点炮(小)</span>');
   if (document.getElementById('gangShangKaiHua').checked) tags.push('<span class="tag gang">杠上开花</span>');
-  if (document.getElementById('menqianqing')?.checked) tags.push('<span class="tag ding">门前清</span>');
   if (tags.length === 0) tags.push('<span style="color:#aaa;font-size:0.82rem;">无特殊触发</span>');
   document.getElementById('summaryTags').innerHTML = tags.join('');
 
