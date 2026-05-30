@@ -633,12 +633,24 @@ function getLoserName(key) { return {xian1:'输家1',xian2:'输家2',xian3:'输�
 function calculate() {
   var basePrice  = parseInt(document.getElementById('basePrice').value) || 5;
   var hupaiType  = document.querySelector('input[name="hupaiType"]:checked').value;
-  var isDianpaoXiaohu = (hupaiType === 'dianpao_xiaohu');
   var fengFan    = document.getElementById('fengFan').checked;
   var loserList  = getLoserList();
   var capAmount  = getCapAmount(basePrice);
 
+  // 门前清：属于"未开口+自摸小胡"，强制覆盖为小胡（无大胡加成）
+  var isMenqianqing = document.getElementById('menqianqing')?.checked;
+  if (isMenqianqing && (hupaiType === 'zimohu_dahu' || hupaiType === 'zimohu_xiaohu')) {
+    hupaiType = 'zimohu_xiaohu';
+  }
+
+  var isDianpaoXiaohu = (hupaiType === 'dianpao_xiaohu');
+
   var W = getWinnerCount();
+  // 门前清时去掉大胡那1次加成（getWinnerGang_raw 读 DOM 还是大胡，手动减掉）
+  if (isMenqianqing) {
+    var domHupai = document.querySelector('input[name="hupaiType"]:checked').value;
+    if (domHupai === 'zimohu_dahu') W = Math.max(0, W - 1);
+  }
 
   // 各输家基础金额（乘风番前）
   // 已开口：lookupPrice(W + Lk)，未开口：降一档 lookupPrice(max(0, W+Lk-1))
@@ -761,5 +773,12 @@ function calculate() {
   document.getElementById('resultSection').scrollIntoView({behavior:'smooth',block:'start'});
 }
 </script>
+
+<div style="text-align:center;padding:18px 0 8px;font-size:0.78rem;color:#888;">
+  <a href="https://magiclyshow.github.io/mahjong-calculator/" target="_blank"
+     style="color:#888;text-decoration:none;">
+    🀄 麻城痞子杠计算器 · 在线版
+  </a>
+</div>
 </body>
 </html>
